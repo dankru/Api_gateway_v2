@@ -88,6 +88,7 @@ func deleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	delete(users, id)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func replaceUser(w http.ResponseWriter, r *http.Request) {
