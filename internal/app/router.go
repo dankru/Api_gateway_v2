@@ -7,12 +7,12 @@ import (
 )
 
 type Router struct {
-	handler handler.Handler
+	handler *handler.Handler
 
 	App *fiber.App
 }
 
-func NewRouter(config fiber.Config, handler handler.Handler) *Router {
+func NewRouter(config fiber.Config, handler *handler.Handler) *Router {
 	app := fiber.New(config)
 	return &Router{handler: handler, App: app}
 }

@@ -23,7 +23,7 @@ func main() {
 	}
 
 	routes := handler.NewHandler(connection)
-	router := app.NewRouter(fiber.Config{AppName: "api_gateway"}, *routes)
+	router := app.NewRouter(fiber.Config{AppName: "api_gateway"}, routes)
 
 	log.Info().Msg("Initializing routes")
 	router.InitializeRoutes()
