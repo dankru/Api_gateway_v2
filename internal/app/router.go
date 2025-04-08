@@ -17,5 +17,8 @@ func NewRouter(config fiber.Config, handler handler.Handler) *Router {
 }
 
 func (r *Router) InitializeRoutes() {
-	r.App.Get("/user/", r.handler.GetUser)
+	r.App.Get("/user/:id", r.handler.GetUser)
+	r.App.Put("/user/:id", r.handler.ReplaceUser)
+	r.App.Delete("/user/:id", r.handler.DeleteUser)
+	r.App.Post("/user", r.handler.CreateUser)
 }
