@@ -3,7 +3,7 @@ services:
     build:
       context: ..
       dockerfile: build/package/Dockerfile
-      target: prod
+      target: dev
     ports:
       - "8000:8000"
     environment:
@@ -12,6 +12,8 @@ services:
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=postgres
+    volumes:
+      - ../:/app
     depends_on:
       - db
 
