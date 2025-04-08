@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -52,17 +53,17 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
-			//TODO: Log
+			log.Err(err).Msgf("User with id: %s not found", id)
 			c.Status(http.StatusNotFound)
 			return nil
 		}
-		//TODO: Log
+		log.Err(err).Msg("Failed to get user from db")
 		return err
 	}
 
 	err = c.JSON(userData)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to respond with json")
 		return err
 	}
 	return nil
@@ -74,7 +75,7 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	var input userInput
 	err := json.Unmarshal(body, &input)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to unmarshall user input")
 		c.Status(http.StatusInternalServerError)
 	}
 
@@ -82,7 +83,7 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest)
 		err := c.SendString(err.Error())
 		if err != nil {
-			//TODO: Log
+			log.Err(err).Msg("Failed to respond with a string")
 			return err
 		}
 		return nil
@@ -98,13 +99,13 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	).Scan(&userId)
 
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to Insert into users")
 		return err
 	}
 
 	err = c.Send([]byte(userId.String()))
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to respond with user id")
 		return err
 	}
 
@@ -119,7 +120,7 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 	var input userInput
 	err := json.Unmarshal(body, &input)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to unmarshall user input")
 		c.Status(http.StatusInternalServerError)
 		return err
 	}
@@ -128,7 +129,7 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 		c.Status(http.StatusBadRequest)
 		err := c.SendString(err.Error())
 		if err != nil {
-			//TODO: Log
+			log.Err(err).Msg("Failed to validate user input")
 			return err
 		}
 		return nil
@@ -144,13 +145,13 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 		id,
 	).Scan(&userData.ID, &userData.Name, &userData.Age, &userData.Anonymous)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to update user")
 		return err
 	}
 
 	err = c.JSON(userData)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to respond with json")
 		return err
 	}
 
@@ -162,11 +163,11 @@ func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 
 	result, err := h.Connection.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
-		//TODO: Log
+		log.Err(err).Msg("Failed to delete user")
 		return err
 	}
 	if result.RowsAffected() == 0 {
-		//TODO: Log
+		log.Err(err).Msgf("User to delete not found by id: %s", id)
 		c.Status(http.StatusNotFound)
 		return nil
 	}

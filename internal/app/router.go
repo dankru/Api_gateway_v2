@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/dankru/Api_gateway_v2/internal/handler"
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
 )
 
 type Router struct {
@@ -21,4 +22,9 @@ func (r *Router) InitializeRoutes() {
 	r.App.Put("/user/:id", r.handler.ReplaceUser)
 	r.App.Delete("/user/:id", r.handler.DeleteUser)
 	r.App.Post("/user", r.handler.CreateUser)
+
+	routes := r.App.GetRoutes()
+	for _, route := range routes {
+		log.Info().Msgf("Initialized route: %s [%s]", route.Path, route.Method)
+	}
 }
