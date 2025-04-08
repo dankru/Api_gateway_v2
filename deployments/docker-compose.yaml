@@ -7,15 +7,15 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DB_HOST=db
+      - DB_HOST=postgres
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=postgres
     depends_on:
-      - db
+      - postgres
 
-  db:
+  postgres:
     image: postgres:15
     ports:
       - "5432:5432"
