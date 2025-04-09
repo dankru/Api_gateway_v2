@@ -1,3 +1,6 @@
 .idea
 .air.*
 tmp
+.env
+/local-development/*
+

@@ -14,7 +14,10 @@ type Router struct {
 
 func NewRouter(config fiber.Config, handler *handler.Handler) *Router {
 	app := fiber.New(config)
-	return &Router{handler: handler, App: app}
+	router := &Router{handler: handler, App: app}
+	log.Info().Msg("Initializing routes")
+	router.InitializeRoutes()
+	return router
 }
 
 func (r *Router) InitializeRoutes() {
