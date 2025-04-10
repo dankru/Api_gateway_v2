@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
+	"github.com/dankru/Api_gateway_v2/internal/validation"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
@@ -52,7 +53,7 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
-	if err := input.Validate(); err != nil {
+	if err := validation.Validate(input); err != nil {
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
@@ -80,7 +81,7 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	if err := input.Validate(); err != nil {
+	if err := validation.Validate(input); err != nil {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 

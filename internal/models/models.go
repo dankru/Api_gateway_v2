@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 )
 
@@ -24,9 +23,4 @@ type UserRequest struct {
 	Name      string `json:"name" validate:"required,gte=2"`
 	Age       int    `json:"age" validate:"required"`
 	Anonymous bool   `json:"anonymous"`
-}
-
-func (i UserRequest) Validate() error {
-	validate := validator.New()
-	return validate.Struct(i)
 }
