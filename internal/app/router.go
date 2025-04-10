@@ -9,11 +9,6 @@ import (
 func NewRouter(config fiber.Config, handler *handler.Handler) *fiber.App {
 	app := fiber.New(config)
 	log.Info().Msg("Initializing routes")
-	InitializeRoutes(app, handler)
-	return app
-}
-
-func InitializeRoutes(app *fiber.App, handler *handler.Handler) {
 	user := app.Group("/user")
 
 	user.Get("/:id", handler.GetUser)
@@ -25,4 +20,6 @@ func InitializeRoutes(app *fiber.App, handler *handler.Handler) {
 	for _, route := range routes {
 		log.Info().Msgf("Initialized route: %s [%s]", route.Path, route.Method)
 	}
+
+	return app
 }
