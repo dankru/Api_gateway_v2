@@ -1,36 +1,50 @@
 package main
 
 import (
+	"fmt"
+	"github.com/dankru/Api_gateway_v2/cmd/logger"
+	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/app"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
+	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
+	"github.com/dankru/Api_gateway_v2/internal/usecase"
 	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 )
-
-var port = ":8000"
-var connString = "postgres://postgres:postgres@postgres:5432/postgres"
 
 func main() {
 
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	config.ConfigInit()
 
-	log.Info().Msgf("Initializing db connection: %s", connString)
-	connection, err := storage.GetConnect(connString)
+	logger.LoggerInit()
+
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		viper.GetString("DB_USER"),
+		viper.GetString("DB_PASSWORD"),
+		viper.GetString("DB_HOST"),
+		viper.GetString("DB_PORT"),
+		viper.GetString("DB_NAME"))
+
+	log.Info().Msgf("initializing db connection: %s", connStr)
+	conn, err := storage.GetConnect(connStr)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get db pool")
+		log.Fatal().Err(errors.Wrap(err, "connect to db failed")).
+			Msg("failed to get db pool")
 	}
 
-	routes := handler.NewHandler(connection)
-	router := app.NewRouter(fiber.Config{AppName: "api_gateway"}, routes)
+	repo := repository.NewUserRepository(conn)
+	uc := usecase.NewUseCase(repo)
+	handle := handler.NewHandler(uc)
 
-	log.Info().Msg("Initializing routes")
-	router.InitializeRoutes()
+	router := app.NewRouter(fiber.Config{AppName: "api_gateway"}, handle)
 
-	log.Info().Msgf("Listen and serve on: %s", port)
-	err = router.App.Listen(port)
-	if err != nil {
-		log.Fatal().Err(err).Msgf("Unable to listen and serve on %s", port)
+	log.Info().Msgf("listen and serve on: %s", viper.GetString("app.port"))
+	if err := router.Listen(viper.GetString("app.port")); err != nil {
+		log.Fatal().
+			Err(errors.Wrap(err, "failed to start server")).
+			Msgf("unable to listen and serve on %s", viper.GetString("app.port"))
 	}
 }

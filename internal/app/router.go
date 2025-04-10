@@ -6,27 +6,22 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type Router struct {
-	handler *handler.Handler
-
-	App *fiber.App
-}
-
-func NewRouter(config fiber.Config, handler *handler.Handler) *Router {
+func NewRouter(config fiber.Config, handler *handler.Handler) *fiber.App {
 	app := fiber.New(config)
-	router := &Router{handler: handler, App: app}
 	log.Info().Msg("Initializing routes")
-	router.InitializeRoutes()
-	return router
+	InitializeRoutes(app, handler)
+	return app
 }
 
-func (r *Router) InitializeRoutes() {
-	r.App.Get("/user/:id", r.handler.GetUser)
-	r.App.Put("/user/:id", r.handler.ReplaceUser)
-	r.App.Delete("/user/:id", r.handler.DeleteUser)
-	r.App.Post("/user", r.handler.CreateUser)
+func InitializeRoutes(app *fiber.App, handler *handler.Handler) {
+	user := app.Group("/user")
 
-	routes := r.App.GetRoutes()
+	user.Get("/:id", handler.GetUser)
+	user.Put("/:id", handler.ReplaceUser)
+	user.Post("/", handler.CreateUser)
+	user.Delete("/:id", handler.DeleteUser)
+
+	routes := app.GetRoutes()
 	for _, route := range routes {
 		log.Info().Msgf("Initialized route: %s [%s]", route.Path, route.Method)
 	}

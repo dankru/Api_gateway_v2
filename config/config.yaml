@@ -1,4 +1,5 @@
 app:
   port: ":8000"
+
 log:
-  level: "DEBUG"
+  level: "debug"

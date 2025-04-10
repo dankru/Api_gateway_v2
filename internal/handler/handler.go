@@ -1,180 +1,117 @@
 package handler
 
 import (
-	"context"
 	"encoding/json"
-	"github.com/go-playground/validator/v10"
+	"github.com/dankru/Api_gateway_v2/internal/models"
+	"github.com/dankru/Api_gateway_v2/internal/usecase"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
-type user struct {
-	ID        uuid.UUID `json:"id"`
-	Name      string    `json:"name"`
-	Age       int       `json:"age"`
-	Anonymous bool      `json:"anonymous"`
-}
-
-type userInput struct {
-	Name      string `json:"name" validate:"required,gte=2"`
-	Age       int    `json:"age" validate:"required"`
-	Anonymous bool   `json:"anonymous"`
-}
-
 type Handler struct {
-	Connection *pgxpool.Pool
+	useCase *usecase.UseCase
 }
-
-var validate *validator.Validate
 
 func init() {
-	validate = validator.New()
 }
 
-func NewHandler(connection *pgxpool.Pool) *Handler {
-	return &Handler{Connection: connection}
+func NewHandler(useCase *usecase.UseCase) *Handler {
+	return &Handler{useCase: useCase}
 }
 
 func (h *Handler) GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if err := uuid.Validate(id); err != nil {
+		log.Err(errors.Wrap(err, "invalid uuid provided")).Msg("validation failed")
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+	}
 
-	var userData user
-	err := h.Connection.QueryRow(
-		context.Background(),
-		"SELECT * FROM users WHERE id = $1", id).
-		Scan(&userData.ID,
-			&userData.Name,
-			&userData.Age,
-			&userData.Anonymous)
-
+	user, err := h.useCase.GetUser(c.Context(), id)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			log.Err(err).Msgf("User with id: %s not found", id)
-			c.Status(http.StatusNotFound)
-			return nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Err(errors.Wrap(err, "user not found")).Msgf("user with id: %s not found", id)
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
 		}
-		log.Err(err).Msg("Failed to get user from db")
+		log.Err(errors.Wrap(err, "db get user query failed")).Msg("Failed to get user from db")
 		return err
 	}
 
-	err = c.JSON(userData)
-	if err != nil {
-		log.Err(err).Msg("Failed to respond with json")
-		return err
-	}
-	return nil
+	return c.JSON(fiber.Map{"data": user})
 }
 
 func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	body := c.Body()
 
-	var input userInput
-	err := json.Unmarshal(body, &input)
-	if err != nil {
-		log.Err(err).Msg("Failed to unmarshall user input")
-		c.Status(http.StatusInternalServerError)
+	var input models.UserRequest
+	if err := json.Unmarshal(body, &input); err != nil {
+		log.Err(errors.Wrap(err, "failed to unmarshall request body into UserRequest struct")).Msg("failed to unmarshall user input")
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
 	}
 
 	if err := input.Validate(); err != nil {
-		c.Status(http.StatusBadRequest)
-		err := c.SendString(err.Error())
-		if err != nil {
-			log.Err(err).Msg("Failed to respond with a string")
-			return err
-		}
-		return nil
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
 	}
 
-	var userId uuid.UUID
-	err = h.Connection.QueryRow(
-		context.Background(),
-		"INSERT INTO users (name, age, anonymous) VALUES ($1, $2, $3) RETURNING id",
-		input.Name,
-		input.Age,
-		input.Anonymous,
-	).Scan(&userId)
-
+	id, err := h.useCase.CreateUser(c.Context(), input)
 	if err != nil {
-		log.Err(err).Msg("Failed to Insert into users")
+		log.Err(errors.Wrap(err, "failed to insert into users")).Msg("failed to create user")
 		return err
 	}
 
-	err = c.Send([]byte(userId.String()))
-	if err != nil {
-		log.Err(err).Msg("Failed to respond with user id")
-		return err
-	}
-
-	return nil
+	return c.JSON(fiber.Map{"id": id})
 }
 
 func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if err := uuid.Validate(id); err != nil {
+		log.Err(errors.Wrap(err, "invalid uuid provided")).Msg("validation failed")
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+	}
 
 	body := c.Body()
 
-	var input userInput
-	err := json.Unmarshal(body, &input)
-	if err != nil {
-		log.Err(err).Msg("Failed to unmarshall user input")
-		c.Status(http.StatusInternalServerError)
-		return err
+	var input models.UserRequest
+	if err := json.Unmarshal(body, &input); err != nil {
+		log.Err(errors.Wrap(err, "input inmarshalling failed")).Msg("failed to unmarshall user input")
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
+
 	}
 
 	if err := input.Validate(); err != nil {
-		c.Status(http.StatusBadRequest)
-		err := c.SendString(err.Error())
-		if err != nil {
-			log.Err(err).Msg("Failed to validate user input")
-			return err
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
+	}
+
+	response, err := h.useCase.UpdateUser(c.Context(), id, input)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Err(errors.Wrap(err, "user not found")).Msgf("user with id: %s not found", id)
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
 		}
-		return nil
-	}
-
-	var userData user
-	err = h.Connection.QueryRow(
-		context.Background(),
-		"UPDATE users SET name = $1, age = $2, anonymous = $3 WHERE id = $4 RETURNING *",
-		input.Name,
-		input.Age,
-		input.Anonymous,
-		id,
-	).Scan(&userData.ID, &userData.Name, &userData.Age, &userData.Anonymous)
-	if err != nil {
-		log.Err(err).Msg("Failed to update user")
+		log.Err(errors.Wrap(err, "failed to update user")).Msgf("failed to update user by id %s", id)
 		return err
 	}
-
-	err = c.JSON(userData)
-	if err != nil {
-		log.Err(err).Msg("Failed to respond with json")
-		return err
-	}
-
-	return nil
+	return c.JSON(fiber.Map{"data": response})
 }
 
 func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
+	if err := uuid.Validate(id); err != nil {
+		log.Err(errors.Wrap(err, "invalid uuid provided")).Msg("validation failed")
+		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+	}
 
-	result, err := h.Connection.Exec(context.Background(), "DELETE FROM users WHERE id = $1", id)
-	if err != nil {
-		log.Err(err).Msg("Failed to delete user")
+	if err := h.useCase.DeleteUser(c.Context(), id); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			log.Err(errors.Wrap(err, "user not found")).Msgf("user with id: %s not found", id)
+			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
+		}
+		log.Err(errors.Wrap(err, "failed to delete user")).Msgf("failed to delete user by id %s", id)
 		return err
 	}
-	if result.RowsAffected() == 0 {
-		log.Err(err).Msgf("User to delete not found by id: %s", id)
-		c.Status(http.StatusNotFound)
-		return nil
-	}
-	c.Status(http.StatusNoContent)
-	return nil
-}
 
-func (i userInput) Validate() error {
-	return validate.Struct(i)
+	return c.Status(http.StatusNoContent).JSON(fiber.Map{})
 }
