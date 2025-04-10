@@ -10,7 +10,6 @@ import (
 	"github.com/dankru/Api_gateway_v2/internal/storage"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
 	"github.com/gofiber/fiber/v2"
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -31,7 +30,7 @@ func main() {
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
 	if err != nil {
-		log.Fatal().Err(errors.Wrap(err, "connect to db failed")).
+		log.Fatal().Err(err).
 			Msg("failed to get db pool")
 	}
 
@@ -44,7 +43,7 @@ func main() {
 	log.Info().Msgf("listen and serve on: %s", viper.GetString("app.port"))
 	if err := router.Listen(viper.GetString("app.port")); err != nil {
 		log.Fatal().
-			Err(errors.Wrap(err, "failed to start server")).
+			Err(err).
 			Msgf("unable to listen and serve on %s", viper.GetString("app.port"))
 	}
 }

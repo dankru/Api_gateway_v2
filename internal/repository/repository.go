@@ -60,8 +60,8 @@ func (u *UserRepository) UpdateUser(c context.Context, id string, input models.U
 func (u *UserRepository) DeleteUser(c context.Context, id string) error {
 	result, err := u.conn.Exec(c, "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
-		log.Err(errors.Wrap(err, "failed to delete user")).Msg("")
-		return err
+		log.Err(err).Msg("failed to delete user")
+		return errors.Wrap(err, "failed to delete user")
 	}
 
 	if result.RowsAffected() == 0 {

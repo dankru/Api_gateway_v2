@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
 )
@@ -11,7 +10,7 @@ func ConfigInit() {
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("config")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Fatal().Err(errors.Wrap(err, "viper failed to read config")).Msg("error initializing config")
+		log.Fatal().Err(err).Msg("error initializing config")
 	}
 	viper.AutomaticEnv()
 }
