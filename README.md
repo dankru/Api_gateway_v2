@@ -2,12 +2,17 @@
 
 ## Run:
 
-### prod:
-```bash
-cd deployments && docker-compose up
-```
+In root:
+1. Create .env, populate with 
+```go
+DB_HOST=...
+DB_PORT=...
+DB_USER=...
+DB_PASSWORD=...
+DB_NAME=...
 
-### dev:
+```
+2.
 ```bash
-cd deployments && docker-compose -f docker-compose.dev.yaml up
+docker-compose up
 ```
