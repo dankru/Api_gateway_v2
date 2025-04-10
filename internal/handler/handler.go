@@ -27,14 +27,14 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
 	user, err := h.useCase.GetUser(c.Context(), id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			log.Err(err).Msgf("user with id: %s not found", id)
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
+			return fiber.NewError(http.StatusNotFound, "user not found")
 		}
 		log.Err(err).Msg("failed to get user from db")
 		return errors.Wrap(err, "failed to get user")
@@ -49,11 +49,11 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 	var input models.UserRequest
 	if err := json.Unmarshal(body, &input); err != nil {
 		log.Err(err).Msg("failed to unmarshall user input")
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
+		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
 	if err := input.Validate(); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
+		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
 	id, err := h.useCase.CreateUser(c.Context(), input)
@@ -69,7 +69,7 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
 	body := c.Body()
@@ -77,19 +77,18 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 	var input models.UserRequest
 	if err := json.Unmarshal(body, &input); err != nil {
 		log.Err(err).Msg("failed to unmarshall user input")
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
-
+		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
 	if err := input.Validate(); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid input"})
+		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
 	response, err := h.useCase.UpdateUser(c.Context(), id, input)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			log.Err(err).Msgf("user with id: %s not found", id)
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
+			return fiber.NewError(http.StatusNotFound, "user not found")
 		}
 		log.Err(err).Msgf("failed to update user by id %s", id)
 		return errors.Wrap(err, "failed to update user")
@@ -101,13 +100,13 @@ func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
-		return c.Status(http.StatusBadRequest).JSON(fiber.Map{"message": "invalid uuid"})
+		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
 	if err := h.useCase.DeleteUser(c.Context(), id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			log.Err(err).Msgf("user with id: %s not found", id)
-			return c.Status(http.StatusNotFound).JSON(fiber.Map{"message": "user not found"})
+			return fiber.NewError(http.StatusNotFound, "user not found")
 		}
 		log.Err(err).Msgf("failed to delete user by id %s", id)
 		return errors.Wrap(err, "failed to delete user")
