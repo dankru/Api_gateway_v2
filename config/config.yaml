@@ -1,6 +1,9 @@
 app:
   name: "api_gateway"
   port: ":8000"
+  cache:
+    ttl: "5s"
+    cleanerInterval: "10s"
 
 log:
   level: "debug"

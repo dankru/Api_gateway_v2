@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"github.com/dankru/Api_gateway_v2/cache"
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/app"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
@@ -39,7 +41,9 @@ func main() {
 	}
 
 	repo := repository.NewUserRepository(conn)
-	uc := usecase.NewUseCase(repo)
+	cacheDecorator := cache.NewCacheDecorator(repo, cfg)
+	cacheDecorator.StartCleaner(context.Background())
+	uc := usecase.NewUseCase(cacheDecorator)
 	handle := handler.NewHandler(uc)
 
 	router := app.NewRouter(fiber.Config{AppName: cfg.AppName}, handle)
@@ -50,4 +54,5 @@ func main() {
 			Err(err).
 			Msgf("unable to listen and serve on %s", cfg.Address)
 	}
+
 }

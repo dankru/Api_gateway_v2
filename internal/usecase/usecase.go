@@ -11,7 +11,7 @@ type UseCase struct {
 	repo repository.UserProvider
 }
 
-func NewUseCase(repo *repository.UserRepository) *UseCase {
+func NewUseCase(repo repository.UserProvider) *UseCase {
 	return &UseCase{repo: repo}
 }
 
