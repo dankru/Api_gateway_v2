@@ -8,36 +8,27 @@ import (
 )
 
 type UseCase struct {
-	repo *repository.UserRepository
+	repo repository.UserStorage
 }
 
 func NewUseCase(repo *repository.UserRepository) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (u *UseCase) GetUser(c context.Context, id string) (models.UserResponse, error) {
+func (u *UseCase) GetUser(c context.Context, id string) (models.User, error) {
 	user, err := u.repo.GetUser(c, id)
-	return u.mapUserToResponse(user), err
+	return user, err
 }
 
-func (u *UseCase) CreateUser(c context.Context, input models.UserRequest) (uuid.UUID, error) {
-	return u.repo.CreateUser(c, input)
+func (u *UseCase) CreateUser(c context.Context, userReq models.UserRequest) (uuid.UUID, error) {
+	return u.repo.CreateUser(c, userReq)
 }
 
-func (u *UseCase) UpdateUser(c context.Context, id string, input models.UserRequest) (models.UserResponse, error) {
-	user, err := u.repo.UpdateUser(c, id, input)
-	return u.mapUserToResponse(user), err
+func (u *UseCase) UpdateUser(c context.Context, id string, userReq models.UserRequest) (models.User, error) {
+	user, err := u.repo.UpdateUser(c, id, userReq)
+	return user, err
 }
 
 func (u *UseCase) DeleteUser(c context.Context, id string) error {
 	return u.repo.DeleteUser(c, id)
-}
-
-func (u *UseCase) mapUserToResponse(user models.User) models.UserResponse {
-	return models.UserResponse{
-		ID:        user.ID,
-		Name:      user.Name,
-		Age:       user.Age,
-		Anonymous: user.Anonymous,
-	}
 }

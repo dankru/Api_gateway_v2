@@ -1,6 +1,8 @@
 package validation
 
-import "github.com/go-playground/validator/v10"
+import (
+	"github.com/go-playground/validator/v10"
+)
 
 func Validate(entity interface{}) error {
 	validate := validator.New()
