@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserStorage interface {
+type UserProvider interface {
 	GetUser(c context.Context, id string) (models.User, error)
 	CreateUser(c context.Context, userReq models.UserRequest) (uuid.UUID, error)
 	UpdateUser(c context.Context, id string, userReq models.UserRequest) (models.User, error)

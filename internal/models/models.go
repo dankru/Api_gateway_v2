@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/google/uuid"
+	"time"
 )
 
 type User struct {
@@ -23,4 +24,9 @@ type UserRequest struct {
 	Name      string `json:"name" validate:"required,gte=2"`
 	Age       int    `json:"age" validate:"required"`
 	Anonymous bool   `json:"anonymous"`
+}
+
+type WrapUser struct {
+	User
+	ExpiredAt time.Time
 }

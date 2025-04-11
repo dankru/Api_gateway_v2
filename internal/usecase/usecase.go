@@ -8,7 +8,7 @@ import (
 )
 
 type UseCase struct {
-	repo repository.UserStorage
+	repo repository.UserProvider
 }
 
 func NewUseCase(repo *repository.UserRepository) *UseCase {
