@@ -2,30 +2,34 @@ package main
 
 import (
 	"fmt"
-	"github.com/dankru/Api_gateway_v2/cmd/logger"
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/app"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
+	"github.com/dankru/Api_gateway_v2/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 )
 
 func main() {
 
-	config.ConfigInit()
+	cfg, err := config.Init()
+	if err != nil {
+		log.Fatal().Msg("failed to initialize configs")
+	}
 
-	logger.LoggerInit()
+	if err := logger.Init(); err != nil {
+		log.Error().Msg("failed to initialize logger")
+	}
 
 	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		viper.GetString("DB_USER"),
-		viper.GetString("DB_PASSWORD"),
-		viper.GetString("DB_HOST"),
-		viper.GetString("DB_PORT"),
-		viper.GetString("DB_NAME"))
+		cfg.DB_USER,
+		cfg.DB_PASSWORD,
+		cfg.DB_HOST,
+		cfg.DB_PORT,
+		cfg.DB_NAME)
 
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
@@ -38,12 +42,12 @@ func main() {
 	uc := usecase.NewUseCase(repo)
 	handle := handler.NewHandler(uc)
 
-	router := app.NewRouter(fiber.Config{AppName: "api_gateway"}, handle)
+	router := app.NewRouter(fiber.Config{AppName: cfg.AppName}, handle)
 
-	log.Info().Msgf("listen and serve on: %s", viper.GetString("app.port"))
-	if err := router.Listen(viper.GetString("app.port")); err != nil {
+	log.Info().Msgf("listen and serve on: %s", cfg.Address)
+	if err := router.Listen(cfg.Address); err != nil {
 		log.Fatal().
 			Err(err).
-			Msgf("unable to listen and serve on %s", viper.GetString("app.port"))
+			Msgf("unable to listen and serve on %s", cfg.Address)
 	}
 }
