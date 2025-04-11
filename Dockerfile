@@ -6,5 +6,6 @@ COPY . /app
 
 RUN go mod download
 
-RUN go build -o app ./cmd
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o app ./cmd
+
 CMD ["./app"]
