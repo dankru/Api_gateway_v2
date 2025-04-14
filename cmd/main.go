@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/app"
 	"github.com/dankru/Api_gateway_v2/internal/cache"
@@ -34,12 +33,7 @@ func main() {
 		log.Error().Msg("failed to initialize logger")
 	}
 
-	connStr := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
-		cfg.DB_USER,
-		cfg.DB_PASSWORD,
-		cfg.DB_HOST,
-		cfg.DB_PORT,
-		cfg.DB_NAME)
+	connStr := cfg.GetConnStr()
 
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
@@ -50,19 +44,19 @@ func main() {
 	}
 
 	repo := repository.NewUserRepository(conn)
-	cacheDecorator := cache.NewCacheDecorator(repo, cfg.CacheTTL, cfg.CleanerInterval)
+	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL, cfg.App.Cache.CleanerInterval)
 	uc := usecase.NewUseCase(cacheDecorator)
 	handle := handler.NewHandler(uc)
 
 	cacheDecorator.StartCleaner(ctx)
 
-	router := app.NewRouter(fiber.Config{AppName: cfg.AppName}, handle)
+	router := app.NewRouter(fiber.Config{AppName: cfg.App.Name}, handle)
 	go func() {
-		log.Info().Msgf("listen and serve on: %s", cfg.Address)
-		if err := router.Listen(cfg.Address); err != nil {
+		log.Info().Msgf("listen and serve on: %s", cfg.App.Address)
+		if err := router.Listen(cfg.App.Address); err != nil {
 			log.Fatal().
 				Err(err).
-				Msgf("unable to listen and serve on %s", cfg.Address)
+				Msgf("unable to listen and serve on %s", cfg.App.Address)
 		}
 	}()
 
