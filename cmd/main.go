@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/dankru/Api_gateway_v2/cache"
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/app"
+	"github.com/dankru/Api_gateway_v2/internal/cache"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
@@ -13,9 +13,17 @@ import (
 	"github.com/dankru/Api_gateway_v2/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	cfg, err := config.Init()
 	if err != nil {
@@ -35,24 +43,36 @@ func main() {
 
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
+	defer conn.Close()
 	if err != nil {
 		log.Fatal().Err(err).
 			Msg("failed to get db pool")
 	}
 
 	repo := repository.NewUserRepository(conn)
-	cacheDecorator := cache.NewCacheDecorator(repo, cfg)
-	cacheDecorator.StartCleaner(context.Background())
+	cacheDecorator := cache.NewCacheDecorator(repo, cfg.CacheTTL, cfg.CleanerInterval)
 	uc := usecase.NewUseCase(cacheDecorator)
 	handle := handler.NewHandler(uc)
 
-	router := app.NewRouter(fiber.Config{AppName: cfg.AppName}, handle)
+	cacheDecorator.StartCleaner(ctx)
 
-	log.Info().Msgf("listen and serve on: %s", cfg.Address)
-	if err := router.Listen(cfg.Address); err != nil {
-		log.Fatal().
-			Err(err).
-			Msgf("unable to listen and serve on %s", cfg.Address)
+	router := app.NewRouter(fiber.Config{AppName: cfg.AppName}, handle)
+	go func() {
+		log.Info().Msgf("listen and serve on: %s", cfg.Address)
+		if err := router.Listen(cfg.Address); err != nil {
+			log.Fatal().
+				Err(err).
+				Msgf("unable to listen and serve on %s", cfg.Address)
+		}
+	}()
+
+	<-stop
+	log.Info().Msg("shutting down gracefully")
+
+	cancel()
+	if err := router.Shutdown(); err != nil {
+		log.Error().Err(err).Msg("error shutting down server")
 	}
 
+	log.Info().Msg("server stopped gracefully")
 }

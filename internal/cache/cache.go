@@ -2,71 +2,81 @@ package cache
 
 import (
 	"context"
-	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"sync"
 	"time"
 )
+
+type wrapUser struct {
+	User      models.User
+	ExpiredAt time.Time
+}
 
 type CacheDecorator struct {
 	repo repository.UserProvider
 
 	mu    sync.RWMutex
-	users map[string]models.WrapUser
+	users map[string]wrapUser
 
-	cfg config.Config
+	cacheTTL        time.Duration
+	cleanerInterval time.Duration
 }
 
-func NewCacheDecorator(repo repository.UserProvider, cfg config.Config) *CacheDecorator {
+func NewCacheDecorator(repo repository.UserProvider, cacheTTL, cleanerInterval time.Duration) *CacheDecorator {
 	return &CacheDecorator{
-		repo:  repo,
-		mu:    sync.RWMutex{},
-		users: make(map[string]models.WrapUser, 100),
-		cfg:   cfg,
+		repo:            repo,
+		mu:              sync.RWMutex{},
+		users:           make(map[string]wrapUser, 100),
+		cacheTTL:        cacheTTL,
+		cleanerInterval: cleanerInterval,
 	}
 }
 
-// Не понимаю как её правильно завершать
 func (cache *CacheDecorator) StartCleaner(c context.Context) {
-	ticker := time.NewTicker(cache.cfg.CleanerInterval)
+	ticker := time.NewTicker(cache.cleanerInterval)
 
 	go func() {
+		defer ticker.Stop()
+
 		for {
 			select {
 			case <-c.Done():
+				log.Info().Msg("cache cleaner shutting down...")
 				return
 			case t := <-ticker.C:
-				for id, wrap := range cache.users {
-					if wrap.ExpiredAt.Before(t) {
-						cache.invalidate(id)
-					}
-				}
+				cache.invalidateExpired(t)
 			}
 		}
 	}()
 }
 
-func (cache *CacheDecorator) get(id string) (models.WrapUser, bool) {
+func (cache *CacheDecorator) invalidateExpired(t time.Time) {
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
+	for id, wrap := range cache.users {
+		if wrap.ExpiredAt.Before(t) {
+			log.Info().Msgf("invalidating expired user: %s", wrap.User)
+			delete(cache.users, id)
+		}
+	}
+}
+
+func (cache *CacheDecorator) get(id string) (wrapUser, bool) {
 	cache.mu.RLock()
+	defer cache.mu.RUnlock()
 	wrap, exists := cache.users[id]
-	cache.mu.RUnlock()
 	return wrap, exists
 }
 
 func (cache *CacheDecorator) set(user models.User, id string) {
-	wrap := models.WrapUser{user, time.Now().Add(cache.cfg.CacheTTL)}
+	wrap := wrapUser{user, time.Now().Add(cache.cacheTTL)}
 
 	cache.mu.Lock()
+	defer cache.mu.Unlock()
 	cache.users[id] = wrap
-	cache.mu.Unlock()
-}
-
-func (cache *CacheDecorator) invalidate(id string) {
-	cache.mu.Lock()
-	delete(cache.users, id)
-	cache.mu.Unlock()
 }
 
 func (cache *CacheDecorator) GetUser(c context.Context, id string) (models.User, error) {
@@ -102,7 +112,7 @@ func (cache *CacheDecorator) DeleteUser(c context.Context, id string) error {
 	if err := cache.repo.DeleteUser(c, id); err != nil {
 		return err
 	}
-	cache.invalidate(id)
+	delete(cache.users, id)
 
 	return nil
 }
