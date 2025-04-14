@@ -21,16 +21,14 @@ func NewHandler(useCase *usecase.UseCase) *Handler {
 	return &Handler{useCase: useCase}
 }
 
-// Вопрос: как нам закрыть интерфейсом handler, если fiber удовлетворяет error?
-// Я хочу чтобы мы могли явно требовать userResponse
-func (h *Handler) GetUser(c *fiber.Ctx) error {
-	id := c.Params("id")
+func (h *Handler) GetUser(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	user, err := h.useCase.GetUser(c.Context(), id)
+	user, err := h.useCase.GetUser(ctx.Context(), id)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
@@ -41,11 +39,11 @@ func (h *Handler) GetUser(c *fiber.Ctx) error {
 	}
 
 	response := h.mapUserToResponse(user)
-	return c.JSON(fiber.Map{"data": response})
+	return ctx.JSON(fiber.Map{"data": response})
 }
 
-func (h *Handler) CreateUser(c *fiber.Ctx) error {
-	body := c.Body()
+func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
+	body := ctx.Body()
 
 	var userReq models.UserRequest
 	if err := json.Unmarshal(body, &userReq); err != nil {
@@ -57,25 +55,25 @@ func (h *Handler) CreateUser(c *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
-	id, err := h.useCase.CreateUser(c.Context(), userReq)
+	id, err := h.useCase.CreateUser(ctx.Context(), userReq)
 	if err != nil {
 		log.Err(err).Msg("failed to create user")
 		return errors.Wrap(err, "failed to insert into users")
 	}
 
-	return c.JSON(fiber.Map{"id": id})
+	return ctx.JSON(fiber.Map{"id": id})
 }
 
 // Вопрос: как нам закрыть интерфейсом handler, если fiber удовлетворяет error?
 // Я хочу чтобы мы могли явно требовать userResponse
-func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
-	id := c.Params("id")
+func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	body := c.Body()
+	body := ctx.Body()
 
 	var userReq models.UserRequest
 	if err := json.Unmarshal(body, &userReq); err != nil {
@@ -87,7 +85,7 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.useCase.UpdateUser(c.Context(), id, userReq)
+	user, err := h.useCase.UpdateUser(ctx.Context(), id, userReq)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
@@ -98,17 +96,17 @@ func (h *Handler) ReplaceUser(c *fiber.Ctx) error {
 	}
 
 	response := h.mapUserToResponse(user)
-	return c.JSON(fiber.Map{"data": response})
+	return ctx.JSON(fiber.Map{"data": response})
 }
 
-func (h *Handler) DeleteUser(c *fiber.Ctx) error {
-	id := c.Params("id")
+func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	if err := h.useCase.DeleteUser(c.Context(), id); err != nil {
+	if err := h.useCase.DeleteUser(ctx.Context(), id); err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
 			return fiber.NewError(http.StatusNotFound)
@@ -117,7 +115,7 @@ func (h *Handler) DeleteUser(c *fiber.Ctx) error {
 		return errors.Wrap(err, "failed to delete user")
 	}
 
-	return c.SendStatus(http.StatusNoContent)
+	return ctx.SendStatus(http.StatusNoContent)
 }
 
 func (h *Handler) mapUserToResponse(u models.User) models.UserResponse {

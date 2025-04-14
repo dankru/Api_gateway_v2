@@ -18,11 +18,11 @@ func NewUserRepository(conn *pgxpool.Pool) *UserRepository {
 	return &UserRepository{conn: conn}
 }
 
-func (u *UserRepository) GetUser(c context.Context, id string) (models.User, error) {
+func (u *UserRepository) GetUser(ctx context.Context, id string) (models.User, error) {
 	var userData models.User
 
 	err := u.conn.QueryRow(
-		c,
+		ctx,
 		"SELECT id, name, age, anonymous FROM users WHERE id = $1", id).
 		Scan(&userData.ID,
 			&userData.Name,
@@ -31,11 +31,11 @@ func (u *UserRepository) GetUser(c context.Context, id string) (models.User, err
 	return userData, err
 }
 
-func (u *UserRepository) CreateUser(c context.Context, userReq models.UserRequest) (uuid.UUID, error) {
+func (u *UserRepository) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
 	var userId uuid.UUID
 
 	err := u.conn.QueryRow(
-		c,
+		ctx,
 		"INSERT INTO users (name, age, anonymous) VALUES ($1, $2, $3) RETURNING id",
 		userReq.Name,
 		userReq.Age,
@@ -44,10 +44,10 @@ func (u *UserRepository) CreateUser(c context.Context, userReq models.UserReques
 	return userId, err
 }
 
-func (u *UserRepository) UpdateUser(c context.Context, id string, userReq models.UserRequest) (models.User, error) {
+func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
 	var userData models.User
 	err := u.conn.QueryRow(
-		c,
+		ctx,
 		"UPDATE users SET name = $1, age = $2, anonymous = $3 WHERE id = $4 RETURNING id, name, age, anonymous",
 		userReq.Name,
 		userReq.Age,
@@ -57,8 +57,8 @@ func (u *UserRepository) UpdateUser(c context.Context, id string, userReq models
 	return userData, err
 }
 
-func (u *UserRepository) DeleteUser(c context.Context, id string) error {
-	result, err := u.conn.Exec(c, "DELETE FROM users WHERE id = $1", id)
+func (u *UserRepository) DeleteUser(ctx context.Context, id string) error {
+	result, err := u.conn.Exec(ctx, "DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		log.Err(err).Msg("failed to delete user")
 		return errors.Wrap(err, "failed to delete user")

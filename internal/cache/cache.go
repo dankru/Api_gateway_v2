@@ -35,7 +35,7 @@ func NewCacheDecorator(repo repository.UserProvider, cacheTTL, cleanerInterval t
 	}
 }
 
-func (cache *CacheDecorator) StartCleaner(c context.Context) {
+func (cache *CacheDecorator) StartCleaner(ctx context.Context) {
 	ticker := time.NewTicker(cache.cleanerInterval)
 
 	go func() {
@@ -43,7 +43,7 @@ func (cache *CacheDecorator) StartCleaner(c context.Context) {
 
 		for {
 			select {
-			case <-c.Done():
+			case <-ctx.Done():
 				log.Info().Msg("cache cleaner shutting down...")
 				return
 			case t := <-ticker.C:
@@ -79,13 +79,13 @@ func (cache *CacheDecorator) set(user models.User, id string) {
 	cache.users[id] = wrap
 }
 
-func (cache *CacheDecorator) GetUser(c context.Context, id string) (models.User, error) {
+func (cache *CacheDecorator) GetUser(ctx context.Context, id string) (models.User, error) {
 	wrap, exists := cache.get(id)
 	if exists {
 		return wrap.User, nil
 	}
 
-	user, err := cache.repo.GetUser(c, id)
+	user, err := cache.repo.GetUser(ctx, id)
 	if err != nil {
 		return user, err
 	}
@@ -94,12 +94,12 @@ func (cache *CacheDecorator) GetUser(c context.Context, id string) (models.User,
 	return user, nil
 }
 
-func (cache *CacheDecorator) CreateUser(c context.Context, userReq models.UserRequest) (uuid.UUID, error) {
-	return cache.repo.CreateUser(c, userReq)
+func (cache *CacheDecorator) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
+	return cache.repo.CreateUser(ctx, userReq)
 }
 
-func (cache *CacheDecorator) UpdateUser(c context.Context, id string, userReq models.UserRequest) (models.User, error) {
-	user, err := cache.repo.UpdateUser(c, id, userReq)
+func (cache *CacheDecorator) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
+	user, err := cache.repo.UpdateUser(ctx, id, userReq)
 	if err != nil {
 		return user, err
 	}
@@ -107,9 +107,9 @@ func (cache *CacheDecorator) UpdateUser(c context.Context, id string, userReq mo
 	return user, nil
 }
 
-func (cache *CacheDecorator) DeleteUser(c context.Context, id string) error {
+func (cache *CacheDecorator) DeleteUser(ctx context.Context, id string) error {
 
-	if err := cache.repo.DeleteUser(c, id); err != nil {
+	if err := cache.repo.DeleteUser(ctx, id); err != nil {
 		return err
 	}
 	delete(cache.users, id)

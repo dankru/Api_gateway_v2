@@ -15,20 +15,20 @@ func NewUseCase(repo repository.UserProvider) *UseCase {
 	return &UseCase{repo: repo}
 }
 
-func (u *UseCase) GetUser(c context.Context, id string) (models.User, error) {
-	user, err := u.repo.GetUser(c, id)
+func (u *UseCase) GetUser(ctx context.Context, id string) (models.User, error) {
+	user, err := u.repo.GetUser(ctx, id)
 	return user, err
 }
 
-func (u *UseCase) CreateUser(c context.Context, userReq models.UserRequest) (uuid.UUID, error) {
-	return u.repo.CreateUser(c, userReq)
+func (u *UseCase) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
+	return u.repo.CreateUser(ctx, userReq)
 }
 
-func (u *UseCase) UpdateUser(c context.Context, id string, userReq models.UserRequest) (models.User, error) {
-	user, err := u.repo.UpdateUser(c, id, userReq)
+func (u *UseCase) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
+	user, err := u.repo.UpdateUser(ctx, id, userReq)
 	return user, err
 }
 
-func (u *UseCase) DeleteUser(c context.Context, id string) error {
-	return u.repo.DeleteUser(c, id)
+func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
+	return u.repo.DeleteUser(ctx, id)
 }
