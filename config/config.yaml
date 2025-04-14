@@ -4,6 +4,8 @@ app:
   cache:
     ttl: "5s"
     cleanerInterval: "10s"
+  metrics:
+    port: ":8001"
+  log:
+    level: "debug"
 
-log:
-  level: "debug"
