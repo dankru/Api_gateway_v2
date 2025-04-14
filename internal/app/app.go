@@ -5,6 +5,7 @@ import (
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/cache"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
+	"github.com/dankru/Api_gateway_v2/internal/metrics"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
@@ -54,10 +55,12 @@ func Run() error {
 
 	cacheDecorator.StartCleaner(ctx)
 
+	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator)
+
 	router := NewRouter(fiber.Config{AppName: cfg.App.Name}, handle)
 	go func() {
 		log.Info().Msgf("listen and serve on: %s", cfg.App.Address)
-		if err := router.Listen(cfg.App.Address); err != nil {
+		if err := router.Listen(":" + cfg.App.Address); err != nil {
 			log.Fatal().
 				Err(err).
 				Msgf("unable to listen and serve on %s", cfg.App.Address)

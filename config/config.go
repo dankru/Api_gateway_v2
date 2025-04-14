@@ -24,11 +24,16 @@ type Log struct {
 	Level string `mapstructure:"level"`
 }
 
+type Metrics struct {
+	Port string `mpstructure:"port"`
+}
+
 type App struct {
-	Name    string `mapstructure:"name"`
-	Address string `mapstructure:"port"`
-	Cache   Cache  `mapstructure:"cache"`
-	Log     Log    `mapstructure:"log"`
+	Name    string  `mapstructure:"name"`
+	Address string  `mapstructure:"port"`
+	Cache   Cache   `mapstructure:"cache"`
+	Log     Log     `mapstructure:"log"`
+	Metrics Metrics `mapstructure:"metrics"`
 }
 
 type Config struct {
