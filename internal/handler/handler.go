@@ -14,11 +14,11 @@ import (
 )
 
 type Handler struct {
-	useCase usecase.UserProvider
+	userUC usecase.UserProvider
 }
 
-func NewHandler(useCase *usecase.UseCase) *Handler {
-	return &Handler{useCase: useCase}
+func NewHandler(userUC *usecase.UserUsecase) *Handler {
+	return &Handler{userUC: userUC}
 }
 
 func (h *Handler) GetUser(ctx *fiber.Ctx) error {
@@ -28,7 +28,7 @@ func (h *Handler) GetUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	user, err := h.useCase.GetUser(ctx.Context(), id)
+	user, err := h.userUC.GetUser(ctx.Context(), id)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
@@ -55,7 +55,7 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
-	id, err := h.useCase.CreateUser(ctx.Context(), userReq)
+	id, err := h.userUC.CreateUser(ctx.Context(), userReq)
 	if err != nil {
 		log.Err(err).Msg("failed to create user")
 		return errors.Wrap(err, "failed to insert into users")
@@ -64,8 +64,6 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{"id": id})
 }
 
-// Вопрос: как нам закрыть интерфейсом handler, если fiber удовлетворяет error?
-// Я хочу чтобы мы могли явно требовать userResponse
 func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
@@ -85,7 +83,7 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.useCase.UpdateUser(ctx.Context(), id, userReq)
+	user, err := h.userUC.UpdateUser(ctx.Context(), id, userReq)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
@@ -106,7 +104,7 @@ func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	if err := h.useCase.DeleteUser(ctx.Context(), id); err != nil {
+	if err := h.userUC.DeleteUser(ctx.Context(), id); err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
 			return fiber.NewError(http.StatusNotFound)

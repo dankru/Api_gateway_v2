@@ -7,28 +7,28 @@ import (
 	"github.com/google/uuid"
 )
 
-type UseCase struct {
+type UserUsecase struct {
 	repo repository.UserProvider
 }
 
-func NewUseCase(repo repository.UserProvider) *UseCase {
-	return &UseCase{repo: repo}
+func NewUserUsecase(repo repository.UserProvider) *UserUsecase {
+	return &UserUsecase{repo: repo}
 }
 
-func (u *UseCase) GetUser(ctx context.Context, id string) (models.User, error) {
+func (u *UserUsecase) GetUser(ctx context.Context, id string) (models.User, error) {
 	user, err := u.repo.GetUser(ctx, id)
 	return user, err
 }
 
-func (u *UseCase) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
+func (u *UserUsecase) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
 	return u.repo.CreateUser(ctx, userReq)
 }
 
-func (u *UseCase) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
+func (u *UserUsecase) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
 	user, err := u.repo.UpdateUser(ctx, id, userReq)
 	return user, err
 }
 
-func (u *UseCase) DeleteUser(ctx context.Context, id string) error {
+func (u *UserUsecase) DeleteUser(ctx context.Context, id string) error {
 	return u.repo.DeleteUser(ctx, id)
 }

@@ -45,7 +45,7 @@ func main() {
 
 	repo := repository.NewUserRepository(conn)
 	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL, cfg.App.Cache.CleanerInterval)
-	uc := usecase.NewUseCase(cacheDecorator)
+	uc := usecase.NewUserUsecase(cacheDecorator)
 	handle := handler.NewHandler(uc)
 
 	cacheDecorator.StartCleaner(ctx)
