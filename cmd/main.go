@@ -29,7 +29,7 @@ func main() {
 		log.Fatal().Msg("failed to initialize configs")
 	}
 
-	if err := logger.Init(); err != nil {
+	if err := logger.Init(cfg.Log.Level); err != nil {
 		log.Error().Msg("failed to initialize logger")
 	}
 

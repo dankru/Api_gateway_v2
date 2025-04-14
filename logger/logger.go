@@ -4,13 +4,10 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/spf13/viper"
 	"os"
 )
 
-func Init() error {
-	logLevel := viper.GetString("log.level")
-
+func Init(logLevel string) error {
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		log.Err(err).Msg("logger global level parsing failed")

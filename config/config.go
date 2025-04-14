@@ -20,10 +20,15 @@ type Cache struct {
 	CleanerInterval time.Duration `mapstructure:"cleanerInterval"`
 }
 
+type Log struct {
+	Level string `mapstructure:"level"`
+}
+
 type App struct {
 	Name    string `mapstructure:"name"`
 	Address string `mapstructure:"port"`
 	Cache   Cache  `mapstructure:"cache"`
+	Log     Log    `mapstructure:"log"`
 }
 
 type Config struct {
