@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"github.com/dankru/Api_gateway_v2/config"
+	"github.com/dankru/Api_gateway_v2/database"
 	"github.com/dankru/Api_gateway_v2/internal/cache"
 	"github.com/dankru/Api_gateway_v2/internal/handler"
 	"github.com/dankru/Api_gateway_v2/internal/metrics"
@@ -38,6 +39,9 @@ func Run() error {
 	}
 
 	connStr := cfg.GetConnStr()
+	if err := database.Migrate(connStr); err != nil {
+		log.Err(err).Msg("failed to migrate")
+	}
 
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
