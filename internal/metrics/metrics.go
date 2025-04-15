@@ -31,12 +31,12 @@ var (
 		})
 )
 
-func InitMetrics(port string, cache *cache.CacheDecorator) {
+func InitMetrics(port string, cache *cache.CacheDecorator, sendInterval time.Duration) {
 	prometheus.MustRegister(HttpStatusMetric)
 	prometheus.MustRegister(CacheElementCount)
 	prometheus.MustRegister(CacheSizeBytes)
 
-	startCacheMetricsCollector(cache, 1*time.Second)
+	startCacheMetricsCollector(cache, sendInterval)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

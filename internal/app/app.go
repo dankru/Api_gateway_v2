@@ -55,7 +55,7 @@ func Run() error {
 
 	cacheDecorator.StartCleaner(ctx)
 
-	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator)
+	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator, cfg.Metrics.SendInterval)
 
 	router := NewRouter(fiber.Config{AppName: cfg.App.Name}, handle)
 	go func() {

@@ -6,6 +6,7 @@ app:
     cleanerInterval: "10s"
   metrics:
     port: "8001"
+    sendInterval: "5s"
   log:
     level: "debug"
 

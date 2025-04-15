@@ -25,7 +25,8 @@ type Log struct {
 }
 
 type Metrics struct {
-	Port string `mpstructure:"port"`
+	Port         string        `mapstructure:"port"`
+	SendInterval time.Duration `mapstructure:"sendInterval"`
 }
 
 type App struct {
