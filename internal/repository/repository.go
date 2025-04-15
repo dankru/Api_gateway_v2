@@ -5,6 +5,7 @@ import (
 	"github.com/dankru/Api_gateway_v2/internal/apperr"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -28,6 +29,11 @@ func (u *UserRepository) GetUser(ctx context.Context, id string) (models.User, e
 			&userData.Name,
 			&userData.Age,
 			&userData.Anonymous)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.User{}, apperr.ErrNotFound
+	}
+
 	return userData, err
 }
 
@@ -54,6 +60,11 @@ func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq mode
 		userReq.Anonymous,
 		id).
 		Scan(&userData.ID, &userData.Name, &userData.Age, &userData.Anonymous)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return models.User{}, apperr.ErrNotFound
+	}
+
 	return userData, err
 }
 
