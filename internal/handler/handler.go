@@ -25,7 +25,8 @@ func NewHandler(userUC *usecase.UserUsecase, tracer trace.Tracer) *Handler {
 }
 
 func (h *Handler) GetUser(ctx *fiber.Ctx) error {
-	span := trace.SpanFromContext(ctx.UserContext())
+	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.GetUser")
+	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
 	)
@@ -37,7 +38,6 @@ func (h *Handler) GetUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	spanCtx := trace.ContextWithSpan(ctx.UserContext(), span)
 	user, err := h.userUC.GetUser(spanCtx, id)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
@@ -55,6 +55,8 @@ func (h *Handler) GetUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
+	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.CreateUser")
+	defer span.End()
 
 	var userReq models.UserRequest
 	if err := ctx.BodyParser(&userReq); err != nil {
@@ -66,7 +68,7 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
-	id, err := h.userUC.CreateUser(ctx.Context(), userReq)
+	id, err := h.userUC.CreateUser(spanCtx, userReq)
 	if err != nil {
 		log.Err(err).Msg("failed to create user")
 		return errors.Wrap(err, "failed to insert into users")
@@ -76,7 +78,8 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
-	span := trace.SpanFromContext(ctx.UserContext())
+	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.ReplaceUser")
+	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
 	)
@@ -97,7 +100,7 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	user, err := h.userUC.UpdateUser(ctx.Context(), id, userReq)
+	user, err := h.userUC.UpdateUser(spanCtx, id, userReq)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
@@ -112,7 +115,8 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
-	span := trace.SpanFromContext(ctx.UserContext())
+	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.DeleteUser")
+	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
 	)
@@ -123,7 +127,7 @@ func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	if err := h.userUC.DeleteUser(ctx.Context(), id); err != nil {
+	if err := h.userUC.DeleteUser(spanCtx, id); err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
 			return fiber.NewError(http.StatusNotFound)
