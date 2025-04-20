@@ -20,7 +20,7 @@ func NewUserRepository(conn *pgxpool.Pool) *UserRepository {
 }
 
 func (u *UserRepository) GetUser(ctx context.Context, id string) (*models.User, error) {
-	var userData *models.User
+	userData := &models.User{}
 
 	err := u.conn.QueryRow(
 		ctx,
@@ -51,7 +51,7 @@ func (u *UserRepository) CreateUser(ctx context.Context, userReq models.UserRequ
 }
 
 func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error) {
-	var userData *models.User
+	userData := &models.User{}
 	err := u.conn.QueryRow(
 		ctx,
 		"UPDATE users SET name = $1, age = $2, anonymous = $3 WHERE id = $4 RETURNING id, name, age, anonymous",
