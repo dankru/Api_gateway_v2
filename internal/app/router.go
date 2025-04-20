@@ -7,7 +7,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewRouter(config fiber.Config, handler *handler.Handler) *fiber.App {
+func newRouter(config fiber.Config, handler *handler.Handler) *fiber.App {
 	app := fiber.New(config)
 	log.Info().Msg("Initializing routes")
 	user := app.Group("/user")
