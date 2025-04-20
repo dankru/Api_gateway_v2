@@ -9,31 +9,44 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"net/http"
 )
 
 type Handler struct {
 	userUC usecase.UserProvider
+	tracer trace.Tracer
 }
 
-func NewHandler(userUC *usecase.UserUsecase) *Handler {
-	return &Handler{userUC: userUC}
+func NewHandler(userUC *usecase.UserUsecase, tracer trace.Tracer) *Handler {
+	return &Handler{userUC: userUC, tracer: tracer}
 }
 
 func (h *Handler) GetUser(ctx *fiber.Ctx) error {
+	span := trace.SpanFromContext(ctx.UserContext())
+	span.SetAttributes(
+		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
+	)
+
 	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
+		span.SetStatus(codes.Error, "invalid uuid")
 		return fiber.NewError(http.StatusBadRequest, "invalid uuid")
 	}
 
-	user, err := h.userUC.GetUser(ctx.Context(), id)
+	spanCtx := trace.ContextWithSpan(ctx.UserContext(), span)
+	user, err := h.userUC.GetUser(spanCtx, id)
 	if err != nil {
 		if errors.Is(err, apperr.ErrNotFound) {
 			log.Err(err).Msgf("user with id: %s not found", id)
+			span.SetStatus(codes.Error, "user not found")
 			return fiber.NewError(http.StatusNotFound)
 		}
 		log.Err(err).Msg("failed to get user from db")
+		span.SetStatus(codes.Error, "failed to get user")
 		return errors.Wrap(err, "failed to get user")
 	}
 
@@ -63,6 +76,11 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
+	span := trace.SpanFromContext(ctx.UserContext())
+	span.SetAttributes(
+		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
+	)
+
 	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")
@@ -94,6 +112,11 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
+	span := trace.SpanFromContext(ctx.UserContext())
+	span.SetAttributes(
+		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
+	)
+
 	id := ctx.Params("id")
 	if err := uuid.Validate(id); err != nil {
 		log.Err(err).Msg("validation failed")

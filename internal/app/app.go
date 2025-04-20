@@ -9,7 +9,7 @@ import (
 	"github.com/dankru/Api_gateway_v2/internal/metrics"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
-	"github.com/dankru/Api_gateway_v2/internal/trace"
+	"github.com/dankru/Api_gateway_v2/internal/tracing"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
 	"github.com/dankru/Api_gateway_v2/logger"
 	"github.com/gofiber/fiber/v2"
@@ -37,10 +37,6 @@ func Run() error {
 		log.Error().Msg("failed to initialize logger")
 		return errors.Wrap(err, "logger initialization failed")
 	}
-	if err := trace.InitTracer(ctx); err != nil {
-		log.Error().Msg("failed to initialize jaeger")
-		return errors.Wrap(err, "failed to initialize jaeger")
-	}
 
 	connStr := cfg.GetConnStr()
 	if err := database.Migrate(connStr); err != nil {
@@ -55,10 +51,17 @@ func Run() error {
 		return errors.Wrap(err, "initializing db connection failed")
 	}
 	defer conn.Close()
-	repo := repository.NewUserRepository(conn)
+
+	tracer, err := tracing.InitTracer()
+	if err != nil {
+		log.Error().Msg("failed to initialize jaeger")
+		return errors.Wrap(err, "failed to initialize jaeger")
+	}
+
+	repo := repository.NewUserRepository(conn, tracer)
 	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL)
-	uc := usecase.NewUserUsecase(cacheDecorator)
-	handle := handler.NewHandler(uc)
+	uc := usecase.NewUserUsecase(cacheDecorator, tracer)
+	handle := handler.NewHandler(uc, tracer)
 
 	cacheDecorator.StartCleaner(ctx, cfg.App.Cache.CleanerInterval)
 
