@@ -1,6 +1,6 @@
 app:
   name: "api_gateway"
-  port: "8000"
+  address: "8000"
   cache:
     ttl: "5s"
     cleanerInterval: "10s"
@@ -10,3 +10,9 @@ app:
   log:
     level: "debug"
 
+db:
+  user: "postgres"
+  password: "postgres"
+  host: "postgres"
+  port: "5432"
+  name: "postgres"

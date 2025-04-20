@@ -8,38 +8,38 @@ import (
 )
 
 type DB struct {
-	User     string `mapstructure:"DB_USER"`
-	Password string `mapstructure:"DB_PASSWORD"`
-	Host     string `mapstructure:"DB_HOST"`
-	Port     string `mapstructure:"DB_PORT"`
-	Name     string `mapstructure:"DB_NAME"`
+	User     string
+	Password string
+	Host     string
+	Port     string
+	Name     string
 }
 
 type Cache struct {
-	TTL             time.Duration `mapstructure:"ttl"`
-	CleanerInterval time.Duration `mapstructure:"cleanerInterval"`
+	TTL             time.Duration
+	CleanerInterval time.Duration
 }
 
 type Log struct {
-	Level string `mapstructure:"level"`
+	Level string
 }
 
 type Metrics struct {
-	Port         string        `mapstructure:"port"`
-	SendInterval time.Duration `mapstructure:"sendInterval"`
+	Port         string
+	SendInterval time.Duration
 }
 
 type App struct {
-	Name    string  `mapstructure:"name"`
-	Address string  `mapstructure:"port"`
-	Cache   Cache   `mapstructure:"cache"`
-	Log     Log     `mapstructure:"log"`
-	Metrics Metrics `mapstructure:"metrics"`
+	Name    string
+	Address string
+	Cache   Cache
+	Log     Log
+	Metrics Metrics
 }
 
 type Config struct {
-	DB  `mapstructure:",squash"`
-	App `mapstructure:"app"`
+	DB
+	App
 }
 
 func Init() (Config, error) {
@@ -53,26 +53,13 @@ func Init() (Config, error) {
 
 	viper.AutomaticEnv()
 
-	envKeys := []string{
-		"DB_USER",
-		"DB_PASSWORD",
-		"DB_HOST",
-		"DB_PORT",
-		"DB_NAME",
-	}
-
-	for _, key := range envKeys {
-		if err := viper.BindEnv(key); err != nil {
-			log.Warn().Err(err).Msgf("viper failed to bind key from env: %s", key)
-		}
-	}
-
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatal().Err(err).Msg("unable to decode config into struct")
 		return Config{}, err
 	}
-
+	fmt.Println("All settings:", viper.AllSettings()) // показать все загруженные ключи
+	fmt.Println("CONFIG: ", cfg)
 	return cfg, nil
 }
 
