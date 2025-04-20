@@ -2,7 +2,6 @@ package cache
 
 import (
 	"context"
-	"fmt"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/google/uuid"
@@ -13,8 +12,8 @@ import (
 )
 
 type wrapUser struct {
-	User      models.User
-	ExpiredAt time.Time
+	user      *models.User
+	expiredAt time.Time
 }
 
 type CacheDecorator struct {
@@ -29,18 +28,17 @@ type CacheDecorator struct {
 	cleanerInterval time.Duration
 }
 
-func NewCacheDecorator(repo repository.UserProvider, cacheTTL, cleanerInterval time.Duration) *CacheDecorator {
+func NewCacheDecorator(repo repository.UserProvider, cacheTTL time.Duration) *CacheDecorator {
 	return &CacheDecorator{
-		repo:            repo,
-		mu:              sync.RWMutex{},
-		users:           make(map[string]wrapUser, 100),
-		cacheTTL:        cacheTTL,
-		cleanerInterval: cleanerInterval,
+		repo:     repo,
+		mu:       sync.RWMutex{},
+		users:    make(map[string]wrapUser, 100),
+		cacheTTL: cacheTTL,
 	}
 }
 
-func (cache *CacheDecorator) StartCleaner(ctx context.Context) {
-	ticker := time.NewTicker(cache.cleanerInterval)
+func (cache *CacheDecorator) StartCleaner(ctx context.Context, cleanerInterval time.Duration) {
+	ticker := time.NewTicker(cleanerInterval)
 
 	go func() {
 		defer ticker.Stop()
@@ -61,8 +59,8 @@ func (cache *CacheDecorator) invalidateExpired(t time.Time) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 	for id, wrap := range cache.users {
-		if wrap.ExpiredAt.Before(t) {
-			log.Info().Msgf("invalidating expired user: %s", wrap.User.ID)
+		if wrap.expiredAt.Before(t) {
+			log.Info().Msgf("invalidating expired user: %s", wrap.user.ID)
 			cache.decrementCacheMetrics(wrap)
 			delete(cache.users, id)
 		}
@@ -76,7 +74,7 @@ func (cache *CacheDecorator) get(id string) (wrapUser, bool) {
 	return wrap, exists
 }
 
-func (cache *CacheDecorator) set(user models.User, id string) {
+func (cache *CacheDecorator) set(user *models.User, id string) {
 	wrap := wrapUser{user, time.Now().Add(cache.cacheTTL)}
 
 	cache.mu.Lock()
@@ -89,16 +87,16 @@ func (cache *CacheDecorator) renewExpiredAt(id string) {
 	cache.mu.Lock()
 	defer cache.mu.Unlock()
 	if wrap, exists := cache.users[id]; exists {
-		wrap.ExpiredAt = time.Now().Add(cache.cacheTTL)
+		wrap.expiredAt = time.Now().Add(cache.cacheTTL)
 		cache.users[id] = wrap
 	}
 }
 
-func (cache *CacheDecorator) GetUser(ctx context.Context, id string) (models.User, error) {
+func (cache *CacheDecorator) GetUser(ctx context.Context, id string) (*models.User, error) {
 	wrap, exists := cache.get(id)
 	if exists {
 		cache.renewExpiredAt(id)
-		return wrap.User, nil
+		return wrap.user, nil
 	}
 
 	user, err := cache.repo.GetUser(ctx, id)
@@ -114,7 +112,7 @@ func (cache *CacheDecorator) CreateUser(ctx context.Context, userReq models.User
 	return cache.repo.CreateUser(ctx, userReq)
 }
 
-func (cache *CacheDecorator) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
+func (cache *CacheDecorator) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error) {
 	user, err := cache.repo.UpdateUser(ctx, id, userReq)
 	if err != nil {
 		return user, err
@@ -128,6 +126,9 @@ func (cache *CacheDecorator) DeleteUser(ctx context.Context, id string) error {
 	if err := cache.repo.DeleteUser(ctx, id); err != nil {
 		return err
 	}
+
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
 	cache.decrementCacheMetrics(cache.users[id])
 	delete(cache.users, id)
 
@@ -135,8 +136,6 @@ func (cache *CacheDecorator) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (cache *CacheDecorator) incrementCacheMetrics(u wrapUser) {
-	fmt.Println("cache element count: ", cache.elementCount)
-	fmt.Println("cache size: ", cache.sizeBytes)
 	cache.elementCount++
 	cache.sizeBytes += cache.getWrapUserSize(u)
 }
@@ -147,7 +146,7 @@ func (cache *CacheDecorator) decrementCacheMetrics(u wrapUser) {
 }
 
 func (cache *CacheDecorator) getWrapUserSize(u wrapUser) int {
-	size := int(unsafe.Sizeof(u)) + int(unsafe.Sizeof(u.User.ID)) + int(unsafe.Sizeof(u.User.Name)) + int(unsafe.Sizeof(u.User.Age)) + int(unsafe.Sizeof(u.User.Anonymous)) + int(unsafe.Sizeof(u.User.PasswordHash))
+	size := int(unsafe.Sizeof(u)) + int(unsafe.Sizeof(u.user.ID)) + int(unsafe.Sizeof(u.user.Name)) + int(unsafe.Sizeof(u.user.Age)) + int(unsafe.Sizeof(u.user.Anonymous)) + int(unsafe.Sizeof(u.user.PasswordHash))
 	return size
 }
 

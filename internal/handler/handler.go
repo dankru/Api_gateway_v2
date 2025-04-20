@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/dankru/Api_gateway_v2/internal/apperr"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
@@ -43,11 +42,10 @@ func (h *Handler) GetUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
-	body := ctx.Body()
 
 	var userReq models.UserRequest
-	if err := json.Unmarshal(body, &userReq); err != nil {
-		log.Err(err).Msg("failed to unmarshall user input")
+	if err := ctx.BodyParser(&userReq); err != nil {
+		log.Err(err).Msg("failed to parse user input")
 		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
@@ -71,12 +69,10 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 		return fiber.NewError(http.StatusBadRequest, err.Error())
 	}
 
-	body := ctx.Body()
-
 	var userReq models.UserRequest
-	if err := json.Unmarshal(body, &userReq); err != nil {
-		log.Err(err).Msg("failed to unmarshall user input")
-		return fiber.NewError(http.StatusBadRequest, err.Error())
+	if err := ctx.BodyParser(&userReq); err != nil {
+		log.Err(err).Msg("failed to parse user input")
+		return fiber.NewError(http.StatusBadRequest, "invalid input")
 	}
 
 	if err := validation.Validate(userReq); err != nil {
@@ -116,7 +112,7 @@ func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(http.StatusNoContent)
 }
 
-func (h *Handler) mapUserToResponse(u models.User) models.UserResponse {
+func (h *Handler) mapUserToResponse(u *models.User) models.UserResponse {
 	return models.UserResponse{
 		ID:        u.ID,
 		Name:      u.Name,

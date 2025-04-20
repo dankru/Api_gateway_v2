@@ -29,6 +29,21 @@ type Metrics struct {
 	SendInterval time.Duration
 }
 
+type TracingAgent struct {
+	Host string
+	Port string
+}
+
+type Sampler struct {
+	Type  string
+	Param string
+}
+
+type Jaeger struct {
+	Agent   TracingAgent
+	Sampler Sampler
+}
+
 type App struct {
 	Name    string
 	Address string
@@ -40,15 +55,16 @@ type App struct {
 type Config struct {
 	DB
 	App
+	Jaeger
 }
 
-func Init() (Config, error) {
+func Init() (*Config, error) {
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("config")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal().Err(err).Msg("error initializing config")
-		return Config{}, err
+		return nil, err
 	}
 
 	viper.AutomaticEnv()
@@ -56,11 +72,10 @@ func Init() (Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatal().Err(err).Msg("unable to decode config into struct")
-		return Config{}, err
+		return nil, err
 	}
-	fmt.Println("All settings:", viper.AllSettings()) // показать все загруженные ключи
-	fmt.Println("CONFIG: ", cfg)
-	return cfg, nil
+
+	return &cfg, nil
 }
 
 func (c *Config) GetConnStr() string {

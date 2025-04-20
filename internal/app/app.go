@@ -9,6 +9,7 @@ import (
 	"github.com/dankru/Api_gateway_v2/internal/metrics"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/dankru/Api_gateway_v2/internal/storage"
+	"github.com/dankru/Api_gateway_v2/internal/trace"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
 	"github.com/dankru/Api_gateway_v2/logger"
 	"github.com/gofiber/fiber/v2"
@@ -32,10 +33,13 @@ func Run() error {
 		log.Fatal().Msg("failed to initialize configs")
 		return errors.Wrap(err, "config initilization failed")
 	}
-
 	if err := logger.Init(cfg.Log.Level); err != nil {
 		log.Error().Msg("failed to initialize logger")
 		return errors.Wrap(err, "logger initialization failed")
+	}
+	if err := trace.InitTracer(ctx); err != nil {
+		log.Error().Msg("failed to initialize jaeger")
+		return errors.Wrap(err, "failed to initialize jaeger")
 	}
 
 	connStr := cfg.GetConnStr()
@@ -45,23 +49,22 @@ func Run() error {
 
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
-	defer conn.Close()
 	if err != nil {
 		log.Fatal().Err(err).
 			Msg("failed to get db pool")
 		return errors.Wrap(err, "initializing db connection failed")
 	}
-
+	defer conn.Close()
 	repo := repository.NewUserRepository(conn)
-	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL, cfg.App.Cache.CleanerInterval)
+	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL)
 	uc := usecase.NewUserUsecase(cacheDecorator)
 	handle := handler.NewHandler(uc)
 
-	cacheDecorator.StartCleaner(ctx)
+	cacheDecorator.StartCleaner(ctx, cfg.App.Cache.CleanerInterval)
 
 	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator, cfg.Metrics.SendInterval)
 
-	router := NewRouter(fiber.Config{AppName: cfg.App.Name}, handle)
+	router := newRouter(fiber.Config{AppName: cfg.App.Name}, handle)
 	go func() {
 		log.Info().Msgf("listen and serve on: %s", cfg.App.Address)
 		if err := router.Listen(":" + cfg.App.Address); err != nil {

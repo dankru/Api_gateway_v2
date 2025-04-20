@@ -19,19 +19,19 @@ func NewUserRepository(conn *pgxpool.Pool) *UserRepository {
 	return &UserRepository{conn: conn}
 }
 
-func (u *UserRepository) GetUser(ctx context.Context, id string) (models.User, error) {
-	var userData models.User
+func (u *UserRepository) GetUser(ctx context.Context, id string) (*models.User, error) {
+	var userData *models.User
 
 	err := u.conn.QueryRow(
 		ctx,
 		"SELECT id, name, age, anonymous FROM users WHERE id = $1", id).
-		Scan(&userData.ID,
-			&userData.Name,
-			&userData.Age,
-			&userData.Anonymous)
+		Scan(userData.ID,
+			userData.Name,
+			userData.Age,
+			userData.Anonymous)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return models.User{}, apperr.ErrNotFound
+		return nil, apperr.ErrNotFound
 	}
 
 	return userData, err
@@ -50,8 +50,8 @@ func (u *UserRepository) CreateUser(ctx context.Context, userReq models.UserRequ
 	return userId, err
 }
 
-func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
-	var userData models.User
+func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error) {
+	var userData *models.User
 	err := u.conn.QueryRow(
 		ctx,
 		"UPDATE users SET name = $1, age = $2, anonymous = $3 WHERE id = $4 RETURNING id, name, age, anonymous",
@@ -59,10 +59,10 @@ func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq mode
 		userReq.Age,
 		userReq.Anonymous,
 		id).
-		Scan(&userData.ID, &userData.Name, &userData.Age, &userData.Anonymous)
+		Scan(userData.ID, userData.Name, userData.Age, userData.Anonymous)
 
 	if errors.Is(err, pgx.ErrNoRows) {
-		return models.User{}, apperr.ErrNotFound
+		return nil, apperr.ErrNotFound
 	}
 
 	return userData, err

@@ -7,8 +7,8 @@ import (
 )
 
 type UserProvider interface {
-	GetUser(ctx context.Context, id string) (models.User, error)
+	GetUser(ctx context.Context, id string) (*models.User, error)
 	CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error)
-	UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error)
+	UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error)
 	DeleteUser(ctx context.Context, id string) error
 }

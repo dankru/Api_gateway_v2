@@ -15,7 +15,7 @@ func NewUserUsecase(repo repository.UserProvider) *UserUsecase {
 	return &UserUsecase{repo: repo}
 }
 
-func (u *UserUsecase) GetUser(ctx context.Context, id string) (models.User, error) {
+func (u *UserUsecase) GetUser(ctx context.Context, id string) (*models.User, error) {
 	user, err := u.repo.GetUser(ctx, id)
 	return user, err
 }
@@ -24,7 +24,7 @@ func (u *UserUsecase) CreateUser(ctx context.Context, userReq models.UserRequest
 	return u.repo.CreateUser(ctx, userReq)
 }
 
-func (u *UserUsecase) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (models.User, error) {
+func (u *UserUsecase) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error) {
 	user, err := u.repo.UpdateUser(ctx, id, userReq)
 	return user, err
 }
