@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/apperr"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/google/uuid"
@@ -9,22 +10,22 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 	"time"
 )
 
 type UserRepository struct {
-	conn   *pgxpool.Pool
-	tracer trace.Tracer
+	conn *pgxpool.Pool
 }
 
-func NewUserRepository(conn *pgxpool.Pool, tracer trace.Tracer) *UserRepository {
-	return &UserRepository{conn: conn, tracer: tracer}
+func NewUserRepository(conn *pgxpool.Pool) *UserRepository {
+	return &UserRepository{conn: conn}
 }
 
 func (u *UserRepository) GetUser(ctx context.Context, id string) (*models.User, error) {
-	_, span := u.tracer.Start(ctx, "UserRepository.GetByID")
+	tracer := otel.Tracer(config.AppName)
+	_, span := tracer.Start(ctx, "UserRepository.GetByID")
 	defer span.End()
 
 	span.SetAttributes(
@@ -59,7 +60,8 @@ func (u *UserRepository) GetUser(ctx context.Context, id string) (*models.User, 
 }
 
 func (u *UserRepository) CreateUser(ctx context.Context, userReq models.UserRequest) (uuid.UUID, error) {
-	_, span := u.tracer.Start(ctx, "UserRepository.CreateUser")
+	tracer := otel.Tracer(config.AppName)
+	_, span := tracer.Start(ctx, "UserRepository.CreateUser")
 	defer span.End()
 
 	span.SetAttributes(
@@ -92,7 +94,8 @@ func (u *UserRepository) CreateUser(ctx context.Context, userReq models.UserRequ
 }
 
 func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq models.UserRequest) (*models.User, error) {
-	_, span := u.tracer.Start(ctx, "UserRepository.UpdateUser")
+	tracer := otel.Tracer(config.AppName)
+	_, span := tracer.Start(ctx, "UserRepository.UpdateUser")
 	defer span.End()
 
 	span.SetAttributes(
@@ -130,7 +133,8 @@ func (u *UserRepository) UpdateUser(ctx context.Context, id string, userReq mode
 }
 
 func (u *UserRepository) DeleteUser(ctx context.Context, id string) error {
-	_, span := u.tracer.Start(ctx, "UserRepository.DeleteUser")
+	tracer := otel.Tracer(config.AppName)
+	_, span := tracer.Start(ctx, "UserRepository.DeleteUser")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("db.query", "DELETE FROM users WHERE id = $1"),

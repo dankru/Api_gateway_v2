@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 	"os"
 	"os/signal"
 	"syscall"
@@ -52,16 +53,17 @@ func Run() error {
 	}
 	defer conn.Close()
 
-	tracer, err := tracing.InitTracer()
+	tracerProvider, err := tracing.NewTracerProvider(cfg.App.Name, cfg.Jaeger.Collector.Endpoint, cfg.App.Environment)
 	if err != nil {
 		log.Error().Msg("failed to initialize jaeger")
 		return errors.Wrap(err, "failed to initialize jaeger")
 	}
+	otel.SetTracerProvider(tracerProvider)
 
-	repo := repository.NewUserRepository(conn, tracer)
+	repo := repository.NewUserRepository(conn)
 	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL)
-	uc := usecase.NewUserUsecase(cacheDecorator, tracer)
-	handle := handler.NewHandler(uc, tracer)
+	uc := usecase.NewUserUsecase(cacheDecorator)
+	handle := handler.NewHandler(uc)
 
 	cacheDecorator.StartCleaner(ctx, cfg.App.Cache.CleanerInterval)
 

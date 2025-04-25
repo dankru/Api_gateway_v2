@@ -29,7 +29,7 @@ type Metrics struct {
 	SendInterval time.Duration
 }
 
-type TracingAgent struct {
+type Agent struct {
 	Host string
 	Port string
 }
@@ -39,17 +39,23 @@ type Sampler struct {
 	Param string
 }
 
+type Collector struct {
+	Endpoint string
+}
+
 type Jaeger struct {
-	Agent   TracingAgent
-	Sampler Sampler
+	Agent     Agent
+	Collector Collector
+	Sampler   Sampler
 }
 
 type App struct {
-	Name    string
-	Address string
-	Cache   Cache
-	Log     Log
-	Metrics Metrics
+	Name        string
+	Address     string
+	Environment string
+	Cache       Cache
+	Log         Log
+	Metrics     Metrics
 }
 
 type Config struct {
@@ -57,6 +63,8 @@ type Config struct {
 	App
 	Jaeger
 }
+
+var AppName string
 
 func Init() (*Config, error) {
 	viper.SetConfigName("config")
@@ -75,6 +83,7 @@ func Init() (*Config, error) {
 		return nil, err
 	}
 
+	setAppName(cfg.App.Name)
 	return &cfg, nil
 }
 
@@ -85,4 +94,8 @@ func (c *Config) GetConnStr() string {
 		c.DB.Host,
 		c.DB.Port,
 		c.DB.Name)
+}
+
+func setAppName(name string) {
+	AppName = name
 }

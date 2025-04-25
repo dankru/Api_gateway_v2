@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/internal/apperr"
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/usecase"
@@ -9,23 +10,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 	"net/http"
 )
 
 type Handler struct {
 	userUC usecase.UserProvider
-	tracer trace.Tracer
 }
 
-func NewHandler(userUC *usecase.UserUsecase, tracer trace.Tracer) *Handler {
-	return &Handler{userUC: userUC, tracer: tracer}
+func NewHandler(userUC *usecase.UserUsecase) *Handler {
+	return &Handler{userUC: userUC}
 }
 
 func (h *Handler) GetUser(ctx *fiber.Ctx) error {
-	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.GetUser")
+	tracer := otel.Tracer(config.AppName)
+	spanCtx, span := tracer.Start(ctx.UserContext(), "Handler.GetUser")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
@@ -55,7 +56,8 @@ func (h *Handler) GetUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
-	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.CreateUser")
+	tracer := otel.Tracer(config.AppName)
+	spanCtx, span := tracer.Start(ctx.UserContext(), "Handler.CreateUser")
 	defer span.End()
 
 	var userReq models.UserRequest
@@ -78,7 +80,8 @@ func (h *Handler) CreateUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
-	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.ReplaceUser")
+	tracer := otel.Tracer(config.AppName)
+	spanCtx, span := tracer.Start(ctx.UserContext(), "Handler.ReplaceUser")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)
@@ -115,7 +118,8 @@ func (h *Handler) ReplaceUser(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) DeleteUser(ctx *fiber.Ctx) error {
-	spanCtx, span := h.tracer.Start(ctx.UserContext(), "Handler.DeleteUser")
+	tracer := otel.Tracer(config.AppName)
+	spanCtx, span := tracer.Start(ctx.UserContext(), "Handler.DeleteUser")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("id", ctx.Params("id")), // Параметр запроса (id)

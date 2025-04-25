@@ -1,6 +1,7 @@
 app:
   name: "api_gateway"
   address: "8000"
+  environment: "development"
   cache:
     ttl: "5s"
     cleanerInterval: "10s"
@@ -21,6 +22,8 @@ jaeger:
   agent:
     host: "jaeger"
     port: "5775"
+  collector:
+    endpoint: "http://jaeger:14268/api/traces"
   sampler:
     type: "const"
-    param: "1"
+    param: "1.0"
