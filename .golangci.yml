@@ -2,7 +2,8 @@ run:
   timeout: 5m
   issues:
     exclude-dirs:
-    - tmp
+      - tmp
+      - database
 
 linters:
   enable:

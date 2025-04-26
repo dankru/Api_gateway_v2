@@ -20,18 +20,11 @@ jobs:
         with:
           go-version: '1.24.2'
 
-      - name: Clean Go cache
-        run: |
-          go clean -cache
-          go clean -modcache
-
-      - name: Set Go env
-        run: |
-          go env -w GOMODCACHE=${{ github.workspace }}/go-mod
-          go env -w GOCACHE=${{ github.workspace }}/go-build
+      - name: Download Go modules
+        run: go mod download
 
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v4 
+        uses: golangci/golangci-lint-action@v4
         with:
           version: v1.58.0
 
