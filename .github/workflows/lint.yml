@@ -18,12 +18,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21' # подставь свою версию
+          go-version: '1.24.2'
 
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.55.2 # или актуальная
+          version: v1.60.0
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
