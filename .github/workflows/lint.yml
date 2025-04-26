@@ -23,27 +23,15 @@ jobs:
           go-version: '1.24.2'
           cache: true
 
-      - name: Install dependencies
-        run: |
-          go mod tidy
-
-      - name: Print debug info
-        run: |
-          ls -la
-          cat go.mod        
-
       - name: Install goimports
         run: go install golang.org/x/tools/cmd/goimports@latest
 
       - name: Format code
         run: goimports -w .
 
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v4
-        with:
-          version: v1.64.2
 
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
+          version: v1.64.2
           args: --timeout=5m -v --build-tags=integration
