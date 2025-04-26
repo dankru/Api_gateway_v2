@@ -3,6 +3,9 @@ package tracing
 import (
 	"github.com/pkg/errors"
 	"go.opentelemetry.io/otel/attribute"
+
+	// Ignores jaeger deprecation lint
+	//nolint:staticcheck
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"

@@ -76,12 +76,9 @@ func startCacheMetricsCollector(cache *cache.CacheDecorator, interval time.Durat
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 
-		for {
-			select {
-			case <-ticker.C:
-				CacheElementCount.Set(float64(cache.ElementCount()))
-				CacheSizeBytes.Set(float64(cache.SizeBytes()))
-			}
+		for range ticker.C {
+			CacheElementCount.Set(float64(cache.ElementCount()))
+			CacheSizeBytes.Set(float64(cache.SizeBytes()))
 		}
 	}()
 }
