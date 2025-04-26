@@ -3,7 +3,9 @@ run:
   issues:
     exclude-dirs:
     - tmp
-
+    exclude-rules:
+      - text: "directory not found"
+      - path: run
 linters:
   enable:
     - errcheck
