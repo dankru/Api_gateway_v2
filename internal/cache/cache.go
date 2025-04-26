@@ -22,10 +22,9 @@ type CacheDecorator struct {
 	mu    sync.RWMutex
 	users map[string]wrapUser
 
-	sizeBytes       int
-	elementCount    int
-	cacheTTL        time.Duration
-	cleanerInterval time.Duration
+	sizeBytes    int
+	elementCount int
+	cacheTTL     time.Duration
 }
 
 func NewCacheDecorator(repo repository.UserProvider, cacheTTL time.Duration) *CacheDecorator {

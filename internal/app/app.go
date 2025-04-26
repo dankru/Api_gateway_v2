@@ -31,7 +31,7 @@ func Run() error {
 
 	cfg, err := config.Init()
 	if err != nil {
-		log.Fatal().Msg("failed to initialize configs")
+		log.Error().Msg("failed to initialize configs")
 		return errors.Wrap(err, "config initilization failed")
 	}
 	if err := logger.Init(cfg.Log.Level); err != nil {
@@ -47,7 +47,7 @@ func Run() error {
 	log.Info().Msgf("initializing db connection: %s", connStr)
 	conn, err := storage.GetConnect(connStr)
 	if err != nil {
-		log.Fatal().Err(err).
+		log.Error().Err(err).
 			Msg("failed to get db pool")
 		return errors.Wrap(err, "initializing db connection failed")
 	}
@@ -70,13 +70,14 @@ func Run() error {
 	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator, cfg.Metrics.SendInterval)
 
 	router := newRouter(fiber.Config{AppName: cfg.App.Name}, handle)
-	go func() {
+	go func() error {
 		log.Info().Msgf("listen and serve on: %s", cfg.App.Address)
 		if err := router.Listen(":" + cfg.App.Address); err != nil {
-			log.Fatal().
+			log.Error().
 				Err(err).
 				Msgf("unable to listen and serve on %s", cfg.App.Address)
 		}
+		return err
 	}()
 
 	<-stop

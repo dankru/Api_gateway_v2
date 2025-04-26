@@ -25,7 +25,12 @@ jobs:
 
       - name: Install dependencies
         run: |
-          go mod download
+          go mod tidy
+
+      - name: Print debug info
+        run: |
+          ls -la
+          cat go.mod        
 
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v4
