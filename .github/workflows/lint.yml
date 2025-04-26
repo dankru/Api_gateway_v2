@@ -28,4 +28,4 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          args: run
+          args: run --out-format=colored-line-number
