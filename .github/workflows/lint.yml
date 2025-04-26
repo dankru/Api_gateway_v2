@@ -33,8 +33,12 @@ jobs:
       - name: Debug file structure
         run: ls -la
 
-      - name: Run golangci-lint
+      - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.64.8
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
           args: run --timeout=5m -v
