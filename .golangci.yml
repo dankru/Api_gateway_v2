@@ -3,7 +3,6 @@ run:
   issues:
     exclude-dirs:
     - tmp
-    - run
 
 linters:
   enable:
