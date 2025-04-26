@@ -2,6 +2,10 @@ package app
 
 import (
 	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/dankru/Api_gateway_v2/config"
 	"github.com/dankru/Api_gateway_v2/database"
 	"github.com/dankru/Api_gateway_v2/internal/cache"
@@ -16,13 +20,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"go.opentelemetry.io/otel"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func Run() error {
-
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -70,14 +70,13 @@ func Run() error {
 	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator, cfg.Metrics.SendInterval)
 
 	router := newRouter(fiber.Config{AppName: cfg.App.Name}, handle)
-	go func() error {
+	go func() {
 		log.Info().Msgf("listen and serve on: %s", cfg.App.Address)
 		if err := router.Listen(":" + cfg.App.Address); err != nil {
 			log.Error().
 				Err(err).
 				Msgf("unable to listen and serve on %s", cfg.App.Address)
 		}
-		return err
 	}()
 
 	<-stop

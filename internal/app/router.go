@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+
 	"github.com/dankru/Api_gateway_v2/internal/handler"
 	"github.com/dankru/Api_gateway_v2/internal/metrics"
 	"github.com/gofiber/contrib/otelfiber"

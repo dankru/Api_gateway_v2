@@ -1,17 +1,17 @@
 package logger
 
 import (
+	"os"
+
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 func Init(logLevel string) error {
 	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		log.Err(err).Msg("logger global level parsing failed")
-		level = zerolog.InfoLevel
 		return errors.Wrap(err, "failed to parse log level from conf")
 	}
 	zerolog.SetGlobalLevel(level)

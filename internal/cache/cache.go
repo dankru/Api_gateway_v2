@@ -2,13 +2,14 @@ package cache
 
 import (
 	"context"
+	"sync"
+	"time"
+	"unsafe"
+
 	"github.com/dankru/Api_gateway_v2/internal/models"
 	"github.com/dankru/Api_gateway_v2/internal/repository"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"sync"
-	"time"
-	"unsafe"
 )
 
 type wrapUser struct {
@@ -121,7 +122,6 @@ func (cache *CacheDecorator) UpdateUser(ctx context.Context, id string, userReq 
 }
 
 func (cache *CacheDecorator) DeleteUser(ctx context.Context, id string) error {
-
 	if err := cache.repo.DeleteUser(ctx, id); err != nil {
 		return err
 	}

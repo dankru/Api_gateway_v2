@@ -1,9 +1,10 @@
 package main
 
 import (
+	"os"
+
 	"github.com/dankru/Api_gateway_v2/internal/app"
 	"github.com/rs/zerolog/log"
-	"os"
 )
 
 func main() {

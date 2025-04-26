@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"embed"
+
 	// Import for side effects - needed for initializing the PostgresSQL driver
 	_ "github.com/jackc/pgx/v5/stdlib"
 
@@ -38,7 +39,7 @@ func Migrate(url string) error {
 	err = goose.Up(db, "migrations")
 	if err != nil {
 		if err = goose.DownTo(db, "migrations", version); err != nil {
-			log.Err(err).Msgf("cannot rollbback migrations to version: %s", version)
+			log.Err(err).Msgf("cannot rollbback migrations to version: %d", version)
 		}
 
 		return errors.Wrap(err, "cannot up migrations")

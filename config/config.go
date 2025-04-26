@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/viper"
-	"time"
 )
 
 type DB struct {
