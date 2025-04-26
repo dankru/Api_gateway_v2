@@ -4,7 +4,6 @@ run:
     exclude-dirs:
       - tmp
       - database
-  build-tags: integration
 
 linters:
   enable:
