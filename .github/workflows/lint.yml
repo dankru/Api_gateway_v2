@@ -20,6 +20,14 @@ jobs:
         with:
           go-version: '1.24.2'
 
+      - name: Set Go env
+        run: |
+          go env -w GOMODCACHE=${{ github.workspace }}/go-mod
+          go env -w GOCACHE=${{ github.workspace }}/go-build
+
+      - name: Debug file structure
+        run: ls -la
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
