@@ -30,15 +30,12 @@ jobs:
           go env -w GOMODCACHE=${{ github.workspace }}/go-mod
           go env -w GOCACHE=${{ github.workspace }}/go-build
 
-      - name: Debug file structure
-        run: ls -la
-
       - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4 
         with:
-          version: v1.64.8
+          version: v1.58.0
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v4
         with:
           args: run --timeout=5m -v --out-format=colored-line-number
