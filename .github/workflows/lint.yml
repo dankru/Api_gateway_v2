@@ -2,9 +2,9 @@ name: Lint
 
 on:
   push:
-    branches: [main, pipelines-test]
+    branches: [*]
   pull_request:
-    branches: [main, pipelines-test]
+    branches: [*]
 
 jobs:
   golangci-lint:
