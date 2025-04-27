@@ -33,11 +33,10 @@ func TestCacheDecorator_CreateUser(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			mockUserProvider := mocks.NewMockUserProvider(ctrl) // создаём мок
-			// Говорим что мы ожидаем вызов CreateUser с таким return
+			mockUserProvider := mocks.NewMockUserProvider(ctrl)
 			mockUserProvider.EXPECT().
 				CreateUser(gomock.Any(), tc.userRequest).
-				Return(uuid.New(), nil) // Возвращаем uuid
+				Return(uuid.New(), nil)
 
 			t.Logf("initializing cache decorator, ttl: %s\n", tc.cacheTTL)
 			cache := NewCacheDecorator(mockUserProvider, tc.cacheTTL)
@@ -45,7 +44,6 @@ func TestCacheDecorator_CreateUser(t *testing.T) {
 			t.Log("creating user through cache decorator")
 			id, err := cache.CreateUser(context.Background(), tc.userRequest)
 			require.NoError(t, err)
-			// Проверяем, что uuid не пустой
 			require.NotEqual(t, uuid.Nil, id, "UUID не должен быть пустым (nil)\n")
 		})
 	}
@@ -77,7 +75,7 @@ func TestCacheDecorator_GetUser(t *testing.T) {
 					Name:      "Daniel",
 					Age:       30,
 					Anonymous: false,
-				}, nil) // Возвращаем юзера
+				}, nil)
 
 			t.Logf("initializing cache decorator, ttl: %s\n", tc.cacheTTL)
 			cache := NewCacheDecorator(mockUserProvider, tc.cacheTTL)
