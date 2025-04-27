@@ -12,9 +12,6 @@ import (
 )
 
 func TestCacheDecorator_CreateUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
 	testCases := []struct {
 		name        string
 		cacheTTL    time.Duration
@@ -32,8 +29,10 @@ func TestCacheDecorator_CreateUser(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-
 		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			mockUserProvider := mocks.NewMockUserProvider(ctrl) // создаём мок
 			// Говорим что мы ожидаем вызов CreateUser с таким return
 			mockUserProvider.EXPECT().
@@ -53,9 +52,6 @@ func TestCacheDecorator_CreateUser(t *testing.T) {
 }
 
 func TestCacheDecorator_GetUser(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
 	testCases := []struct {
 		name     string
 		cacheTTL time.Duration
@@ -70,6 +66,9 @@ func TestCacheDecorator_GetUser(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
 			mockUserProvider := mocks.NewMockUserProvider(ctrl) // создаём мок
 			mockUserProvider.EXPECT().
 				GetUser(gomock.Any(), tc.ID.String()).
