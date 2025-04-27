@@ -64,7 +64,7 @@ func Run() error {
 	cacheDecorator := cache.NewCacheDecorator(repo, cfg.App.Cache.TTL)
 	uc := usecase.NewUserUsecase(cacheDecorator)
 	handle := handler.NewHandler(uc)
-
+	//
 	cacheDecorator.StartCleaner(ctx, cfg.App.Cache.CleanerInterval)
 
 	metrics.InitMetrics(cfg.App.Metrics.Port, cacheDecorator, cfg.Metrics.SendInterval)
