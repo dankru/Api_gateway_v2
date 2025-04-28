@@ -1,0 +1,29 @@
+run:
+  timeout: 5m
+  issues:
+    exclude-dirs:
+      - tmp
+      - database
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - goimports
+    - bodyclose
+    - copyloopvar
+    - sloglint
+    - unconvert
+    - gosec
+    - noctx
+    - gocritic
+    - testifylint
+    - goconst
+    - nilerr
+    - contextcheck
+    - whitespace
+

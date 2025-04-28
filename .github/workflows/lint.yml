@@ -1,0 +1,40 @@
+name: Lint
+
+on:
+  push:
+    branches: [ '*' ]
+
+jobs:
+  golangci-lint:
+    name: Run golangci-lint
+    strategy:
+      matrix:
+        go: [ '1.24' ]
+        golint: [ 'v1.64.2' ]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Install goimports
+        run: go install golang.org/x/tools/cmd/goimports@latest
+
+      - name: Format code
+        run: goimports -w .
+
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4
+        with:
+          version: ${{ matrix.golint }}
+          args: --timeout=5m --out-format=colored-line-number

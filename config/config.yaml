@@ -1,0 +1,29 @@
+app:
+  name: "api_gateway"
+  address: "8000"
+  environment: "development"
+  cache:
+    ttl: "5s"
+    cleanerInterval: "10s"
+  metrics:
+    port: "8001"
+    sendInterval: "5s"
+  log:
+    level: "debug"
+
+db:
+  user: "postgres"
+  password: "postgres"
+  host: "postgres"
+  port: "5432"
+  name: "postgres"
+
+jaeger:
+  agent:
+    host: "jaeger"
+    port: "5775"
+  collector:
+    endpoint: "http://jaeger:14268/api/traces"
+  sampler:
+    type: "const"
+    param: "1.0"
